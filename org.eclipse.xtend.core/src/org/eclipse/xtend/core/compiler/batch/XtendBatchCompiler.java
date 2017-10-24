@@ -34,6 +34,7 @@ import org.eclipse.jdt.core.compiler.batch.BatchCompiler;
 import org.eclipse.xtend.core.macro.ProcessorInstanceForJvmTypeProvider;
 import org.eclipse.xtend.core.xtend.XtendFile;
 import org.eclipse.xtext.Constants;
+import org.eclipse.xtext.common.types.access.TypeResource;
 import org.eclipse.xtext.common.types.access.impl.ClasspathTypeProvider;
 import org.eclipse.xtext.common.types.access.impl.IndexedJvmTypeAccess;
 import org.eclipse.xtext.common.types.descriptions.IStubGenerator;
@@ -486,7 +487,16 @@ public class XtendBatchCompiler {
 			}
 			// install a fresh type provider for the second phase, so we clear all previously cached classes and misses.
 			installJvmTypeProvider(resourceSet, classDirectory, false);
-			EcoreUtil.resolveAll(resourceSet);
+			List<Resource> toBeResolved = new ArrayList<>(resourceSet.getResources().size());
+			for (Resource resource : resourceSet.getResources()) {
+				if (resource instanceof TypeResource) {
+					continue;
+				}
+				toBeResolved.add(resource);
+			}
+			for(Resource resource : toBeResolved) {
+				EcoreUtil.resolveAll(resource);
+			}
 			List<Issue> issues = validate(resourceSet);
 			Iterable<Issue> errors = Iterables.filter(issues, SeverityFilter.ERROR);
 			Iterable<Issue> warnings = Iterables.filter(issues, SeverityFilter.WARNING);
@@ -662,6 +672,9 @@ public class XtendBatchCompiler {
 		List<Issue> issues = Lists.newArrayList();
 		List<Resource> resources = Lists.newArrayList(resourceSet.getResources());
 		for (Resource resource : resources) {
+			if (resource instanceof TypeResource) {
+				continue;
+			}
 			IResourceServiceProvider resourceServiceProvider = IResourceServiceProvider.Registry.INSTANCE
 					.getResourceServiceProvider(resource.getURI());
 			if (resourceServiceProvider != null && isSourceFile(resource)) {
