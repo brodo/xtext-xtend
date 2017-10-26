@@ -1,12 +1,20 @@
 package org.eclipse.xtend.core.compiler.batch;
 
 import static com.google.common.collect.Iterables.*;
+import static com.google.common.collect.Iterables.addAll;
+import static com.google.common.collect.Iterables.concat;
+import static com.google.common.collect.Iterables.filter;
+import static com.google.common.collect.Iterables.isEmpty;
+import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Lists.*;
+import static com.google.common.collect.Lists.transform;
 import static com.google.common.collect.Maps.*;
 import static com.google.common.collect.Sets.*;
 import static java.util.Arrays.asList;
 import static java.util.Collections.*;
 import static org.eclipse.xtext.util.Strings.*;
+import static org.eclipse.xtext.util.Strings.concat;
+import static org.eclipse.xtext.util.Strings.isEmpty;
 
 import java.io.CharArrayWriter;
 import java.io.Closeable;
@@ -34,7 +42,6 @@ import org.eclipse.jdt.core.compiler.batch.BatchCompiler;
 import org.eclipse.xtend.core.macro.ProcessorInstanceForJvmTypeProvider;
 import org.eclipse.xtend.core.xtend.XtendFile;
 import org.eclipse.xtext.Constants;
-import org.eclipse.xtext.common.types.access.TypeResource;
 import org.eclipse.xtext.common.types.access.impl.ClasspathTypeProvider;
 import org.eclipse.xtext.common.types.access.impl.IndexedJvmTypeAccess;
 import org.eclipse.xtext.common.types.descriptions.IStubGenerator;
@@ -489,10 +496,9 @@ public class XtendBatchCompiler {
 			installJvmTypeProvider(resourceSet, classDirectory, false);
 			List<Resource> toBeResolved = new ArrayList<>(resourceSet.getResources().size());
 			for (Resource resource : resourceSet.getResources()) {
-				if (resource instanceof TypeResource) {
-					continue;
+				if (isSourceFile(resource)) {
+					toBeResolved.add(resource);
 				}
-				toBeResolved.add(resource);
 			}
 			for(Resource resource : toBeResolved) {
 				EcoreUtil.resolveAll(resource);
@@ -672,9 +678,6 @@ public class XtendBatchCompiler {
 		List<Issue> issues = Lists.newArrayList();
 		List<Resource> resources = Lists.newArrayList(resourceSet.getResources());
 		for (Resource resource : resources) {
-			if (resource instanceof TypeResource) {
-				continue;
-			}
 			IResourceServiceProvider resourceServiceProvider = IResourceServiceProvider.Registry.INSTANCE
 					.getResourceServiceProvider(resource.getURI());
 			if (resourceServiceProvider != null && isSourceFile(resource)) {
